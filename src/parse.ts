@@ -13,6 +13,18 @@ export default async (url: string, config?: AxiosRequestConfig) => {
     });
 
     const result = xml.parse(data);
+    if (result.hasOwnProperty('rdf:RDF')) {
+        const channel = result['rdf:RDF']['channel'] || {};
+        channel.entry = (result['rdf:RDF']['item'] || []).map((entry) => {
+            return {
+                title: entry.title,
+                link: entry.link,
+                description: entry.description || entry['dc:description'],
+                created: entry.published || entry.pubDate || entry['dc:date'],
+            };
+        });
+        result.feed = channel;
+    }
 
     let channel = result.rss && result.rss.channel ? result.rss.channel : result.feed;
     if (Array.isArray(channel)) channel = channel[0];
